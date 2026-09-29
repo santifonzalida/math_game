@@ -1,0 +1,77 @@
+<div class="space-y-8 text-center">
+  <div>
+    <p class="text-sm font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      {{ operation().symbol }} {{ operation().label }} · Nivel {{ level().label }}
+    </p>
+    <h1 class="mt-2 text-3xl font-bold sm:text-4xl">
+      @if (position() === 1) {
+        ¡Nuevo récord, {{ result().config.name }}!
+      } @else {
+        ¡Bien hecho, {{ result().config.name }}!
+      }
+    </h1>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div
+      class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
+    >
+      <p class="text-sm text-slate-500 dark:text-slate-400">Tiempo</p>
+      <p class="mt-1 text-4xl font-bold tabular-nums">{{ time() }}</p>
+    </div>
+    <div
+      class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
+    >
+      <p class="text-sm text-slate-500 dark:text-slate-400">Errores</p>
+      <p class="mt-1 text-4xl font-bold tabular-nums">{{ result().errors }}</p>
+    </div>
+  </div>
+
+  <div class="min-h-6 text-slate-600 dark:text-slate-300" aria-live="polite">
+    @if (session.saveError()) {
+      <p class="text-red-600 dark:text-red-400">
+        No se pudo guardar tu resultado.
+        <button type="button" class="font-semibold underline" (click)="retrySave()">
+          Reintentar
+        </button>
+      </p>
+    } @else if (!session.savedScore() || !rankingLoaded()) {
+      <p>Guardando resultado…</p>
+    } @else if (position(); as pos) {
+      <p>
+        Quedaste en el puesto
+        <strong class="text-indigo-600 dark:text-indigo-400">#{{ pos }}</strong> del ranking.
+      </p>
+    } @else {
+      <p>Resultado guardado. Todavía no entraste al top 100, ¡seguí intentando!</p>
+    }
+  </div>
+
+  <div class="flex flex-col gap-3 sm:flex-row">
+    <button
+      type="button"
+      class="flex-1 rounded-xl bg-indigo-600 px-6 py-4 text-lg font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50"
+      [disabled]="restarting()"
+      (click)="playAgain()"
+    >
+      {{ restarting() ? 'Cargando…' : 'Jugar de nuevo' }}
+    </button>
+    <a
+      class="rounded-xl border border-slate-300 px-6 py-4 font-medium hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+      routerLink="/ranking"
+      [queryParams]="{
+        operation: result().config.operation,
+        level: result().config.level,
+        highlight: session.savedScore()?.id,
+      }"
+    >
+      Ver ranking
+    </a>
+    <a
+      class="rounded-xl border border-slate-300 px-6 py-4 font-medium hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+      routerLink="/"
+    >
+      Cambiar juego
+    </a>
+  </div>
+</div>

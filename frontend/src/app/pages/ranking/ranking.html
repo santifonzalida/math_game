@@ -1,0 +1,98 @@
+<div class="space-y-6">
+  <h1 class="text-3xl font-bold tracking-tight">Ranking</h1>
+
+  <nav class="grid grid-cols-4 gap-2" aria-label="Operación">
+    @for (op of operations; track op.value) {
+      <a
+        class="rounded-xl border-2 px-2 py-2 text-center transition"
+        [class]="
+          operation() === op.value
+            ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300'
+            : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700'
+        "
+        routerLink="/ranking"
+        [queryParams]="{ operation: op.value, level: level() }"
+        [attr.aria-current]="operation() === op.value ? 'page' : null"
+      >
+        <span class="block text-2xl font-bold leading-none">{{ op.symbol }}</span>
+        <span class="mt-1 block text-xs sm:hidden">{{ op.shortLabel }}</span>
+        <span class="mt-1 hidden text-xs sm:block">{{ op.label }}</span>
+      </a>
+    }
+  </nav>
+
+  <nav class="flex gap-1 rounded-xl bg-slate-200 p-1 dark:bg-slate-800" aria-label="Nivel">
+    @for (lvl of levels; track lvl.value) {
+      <a
+        class="flex-1 rounded-lg px-3 py-2 text-center text-sm font-medium transition"
+        [class]="
+          level() === lvl.value
+            ? 'bg-white shadow-sm dark:bg-slate-950'
+            : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
+        "
+        routerLink="/ranking"
+        [queryParams]="{ operation: operation(), level: lvl.value }"
+        [attr.aria-current]="level() === lvl.value ? 'page' : null"
+      >
+        {{ lvl.label }}
+      </a>
+    }
+  </nav>
+
+  <div
+    class="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+  >
+    @if (ranking.error()) {
+      <p class="p-6 text-center text-red-600 dark:text-red-400">
+        No se pudo cargar el ranking.
+        <button type="button" class="font-semibold underline" (click)="ranking.reload()">
+          Reintentar
+        </button>
+      </p>
+    } @else if (ranking.hasValue()) {
+      @if (ranking.value().length === 0) {
+        <p class="p-6 text-center text-slate-500 dark:text-slate-400">
+          Todavía nadie jugó este modo. ¡Sé el primero!
+        </p>
+      } @else {
+        <table class="w-full text-left">
+          <thead
+            class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400"
+          >
+            <tr>
+              <th class="w-12 px-4 py-3">#</th>
+              <th class="px-4 py-3">Nombre</th>
+              <th class="px-4 py-3 text-right">Tiempo</th>
+              <th class="px-4 py-3 text-right">Errores</th>
+            </tr>
+          </thead>
+          <tbody class="tabular-nums">
+            @for (score of ranking.value(); track score.id; let i = $index) {
+              <tr
+                class="border-b border-slate-100 last:border-0 dark:border-slate-800/60"
+                [class]="
+                  score.id === highlight()
+                    ? 'bg-indigo-50 font-semibold dark:bg-indigo-500/15'
+                    : i === 0
+                      ? 'font-semibold'
+                      : ''
+                "
+              >
+                <td class="px-4 py-3">{{ i === 0 ? '🏆' : i + 1 }}</td>
+                <td class="max-w-0 truncate px-4 py-3">{{ score.name }}</td>
+                <td class="px-4 py-3 text-right">{{ formatTime(score.timeMs) }}</td>
+                <td class="px-4 py-3 text-right">{{ score.errors }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    } @else {
+      <p class="p-6 text-center text-slate-500 dark:text-slate-400">Cargando…</p>
+    }
+  </div>
+
+  <a class="inline-block text-indigo-600 hover:underline dark:text-indigo-400" routerLink="/"
+    >← Volver a jugar</a
+  >
+</div>
