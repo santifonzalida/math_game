@@ -1,5 +1,6 @@
 server {
-  listen 80;
+  # Railway (and most PaaS) assign the port through $PORT; defaults to 80 in the Dockerfile.
+  listen ${PORT};
   server_name _;
   root /usr/share/nginx/html;
   index index.html;
@@ -11,6 +12,12 @@ server {
   location ~* \.(?:js|css)$ {
     expires 1y;
     add_header Cache-Control "public, immutable";
+    try_files $uri =404;
+  }
+
+  # Generated at container start from API_URL (see 40-env-js.sh): must never be cached.
+  location = /env.js {
+    add_header Cache-Control "no-store";
     try_files $uri =404;
   }
 

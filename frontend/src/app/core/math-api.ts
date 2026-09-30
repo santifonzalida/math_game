@@ -3,10 +3,19 @@ import { Injectable, InjectionToken, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { Level, NewScore, Operation, Question, Score } from './models';
 
+declare global {
+  interface Window {
+    /** Set by public/env.js, which the Docker image generates from API_URL on start. */
+    __env?: { apiUrl?: string };
+  }
+}
+
 export const API_URL = new InjectionToken<string>('API_URL', {
   providedIn: 'root',
-  // Same host the page was loaded from, so it also works from a phone on the LAN.
-  factory: () => `http://${window.location.hostname}:3000`,
+  factory: () =>
+    window.__env?.apiUrl?.replace(/\/+$/, '') ||
+    // Local dev: same host the page was loaded from, so it also works from a phone on the LAN.
+    `http://${window.location.hostname}:3000`,
 });
 
 @Injectable({ providedIn: 'root' })
