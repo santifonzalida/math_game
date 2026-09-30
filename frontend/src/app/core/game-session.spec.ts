@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { GameSession } from './game-session';
+import { COUNTDOWN_FROM, GameSession } from './game-session';
 import { MathApi } from './math-api';
 import { GameConfig, Question, Score } from './models';
 
@@ -23,18 +23,44 @@ describe('GameSession', () => {
     };
     TestBed.configureTestingModule({ providers: [{ provide: MathApi, useValue: api }] });
     session = TestBed.inject(GameSession);
+    vi.useFakeTimers();
   });
 
-  it('starts a game with the questions from the API', async () => {
+  afterEach(() => vi.useRealTimers());
+
+  async function startAndSkipCountdown() {
     await session.start(config);
+    vi.advanceTimersByTime(COUNTDOWN_FROM * 1000);
+  }
+
+  it('starts a game with the questions from the API', async () => {
+    await startAndSkipCountdown();
 
     expect(api.getQuestions).toHaveBeenCalledWith('addition', 'low');
     expect(session.status()).toBe('playing');
     expect(session.currentQuestion()).toEqual(questions[0]);
   });
 
-  it('keeps the same question and counts an error on a wrong answer', async () => {
+  it('counts down 3, 2, 1 before playing and ignores answers meanwhile', async () => {
     await session.start(config);
+    expect(session.status()).toBe('countdown');
+    expect(session.countdown()).toBe(3);
+
+    expect(session.answer(questions[0].answer)).toBe('wrong');
+    expect(session.errors()).toBe(0);
+    expect(session.correctCount()).toBe(0);
+
+    vi.advanceTimersByTime(1000);
+    expect(session.countdown()).toBe(2);
+    vi.advanceTimersByTime(1000);
+    expect(session.countdown()).toBe(1);
+    expect(session.elapsedMs()).toBe(0);
+    vi.advanceTimersByTime(1000);
+    expect(session.status()).toBe('playing');
+  });
+
+  it('keeps the same question and counts an error on a wrong answer', async () => {
+    await startAndSkipCountdown();
 
     expect(session.answer(99)).toBe('wrong');
     expect(session.errors()).toBe(1);
@@ -42,7 +68,7 @@ describe('GameSession', () => {
   });
 
   it('finishes after 10 correct answers and saves the score', async () => {
-    await session.start(config);
+    await startAndSkipCountdown();
     session.answer(-5);
 
     const results = questions.map((q) => session.answer(q.answer));
@@ -59,7 +85,7 @@ describe('GameSession', () => {
 
   it('lets the player retry saving after a failure', async () => {
     api.saveScore.mockRejectedValueOnce(new Error('offline'));
-    await session.start(config);
+    await startAndSkipCountdown();
     questions.forEach((q) => session.answer(q.answer));
     await vi.waitFor(() => expect(session.saveError()).toBe(true));
 

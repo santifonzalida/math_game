@@ -8,7 +8,8 @@ import { Result } from './pages/result/result';
 
 // Play and result only make sense for the game in memory; after a reload, go back home.
 const hasActiveGame: CanActivateFn = () =>
-  inject(GameSession).status() === 'playing' || inject(Router).createUrlTree(['/']);
+  ['countdown', 'playing'].includes(inject(GameSession).status()) ||
+  inject(Router).createUrlTree(['/']);
 
 const hasResult: CanActivateFn = () =>
   inject(GameSession).result() !== null || inject(Router).createUrlTree(['/']);

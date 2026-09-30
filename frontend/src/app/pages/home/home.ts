@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { GameSession } from '../../core/game-session';
+import { openKeyboardEarly, releaseKeyboardProxy } from '../../core/keyboard-proxy';
 import {
   GameConfig,
   LEVELS,
@@ -69,10 +70,12 @@ export class Home {
     };
     saveLastConfig(config);
     this.error.set(false);
+    openKeyboardEarly();
     try {
       await this.session.start(config);
       await this.router.navigate(['/play']);
     } catch {
+      releaseKeyboardProxy();
       this.error.set(true);
     }
   }

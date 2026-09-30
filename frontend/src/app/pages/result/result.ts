@@ -2,6 +2,7 @@ import { Component, computed, inject, resource, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { formatTime } from '../../core/format-time';
 import { GameSession } from '../../core/game-session';
+import { openKeyboardEarly, releaseKeyboardProxy } from '../../core/keyboard-proxy';
 import { MathApi } from '../../core/math-api';
 import { levelOf, operationOf } from '../../core/models';
 
@@ -49,10 +50,12 @@ export class Result {
 
   protected async playAgain(): Promise<void> {
     this.restarting.set(true);
+    openKeyboardEarly();
     try {
       await this.session.start(this.result().config);
       await this.router.navigate(['/play']);
     } catch {
+      releaseKeyboardProxy();
       this.restarting.set(false);
     }
   }

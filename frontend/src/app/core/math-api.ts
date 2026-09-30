@@ -5,7 +5,8 @@ import { Level, NewScore, Operation, Question, Score } from './models';
 
 export const API_URL = new InjectionToken<string>('API_URL', {
   providedIn: 'root',
-  factory: () => 'http://localhost:3000',
+  // Same host the page was loaded from, so it also works from a phone on the LAN.
+  factory: () => `http://${window.location.hostname}:3000`,
 });
 
 @Injectable({ providedIn: 'root' })

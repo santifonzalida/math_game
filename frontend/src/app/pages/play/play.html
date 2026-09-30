@@ -38,9 +38,21 @@
       [class]="cardClass()"
       (submit)="submit($event)"
     >
-      <p class="text-5xl font-bold tabular-nums tracking-tight sm:text-6xl" aria-live="polite">
-        {{ q.a }} {{ symbol() }} {{ q.b }}
-      </p>
+      @if (countingDown()) {
+        <p
+          class="text-5xl font-bold text-indigo-600 sm:text-6xl dark:text-indigo-400"
+          aria-live="assertive"
+        >
+          <!-- One-item @for recreates the element on each tick, restarting the animation. -->
+          @for (n of [session.countdown()]; track n) {
+            <span class="inline-block animate-pop">{{ n }}</span>
+          }
+        </p>
+      } @else {
+        <p class="text-5xl font-bold tabular-nums tracking-tight sm:text-6xl" aria-live="polite">
+          {{ q.a }} {{ symbol() }} {{ q.b }}
+        </p>
+      }
 
       <div class="mt-8 flex items-stretch justify-center gap-2">
         @if (allowsNegative()) {
@@ -67,12 +79,12 @@
 
       <button
         type="submit"
-        class="mt-6 w-full rounded-xl bg-indigo-600 px-6 py-3 text-lg font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50 sm:w-auto"
-        [disabled]="draft() === '' || draft() === '-'"
+        class="mt-6 w-full rounded-xl bg-indigo-600 px-6 py-3 text-lg font-semibold text-white transition hover:bg-indigo-500 sm:w-auto"
+        [class.opacity-50]="draft() === '' || draft() === '-'"
       >
         Responder
       </button>
-      <p class="mt-3 hidden text-xs text-slate-400 sm:block">o presioná Enter</p>
+      <p class="mt-3 text-xs text-slate-400">Si es correcta avanza sola</p>
     </form>
   }
 </div>

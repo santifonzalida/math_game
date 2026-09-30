@@ -2,7 +2,7 @@ import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core'
 import { MathApi } from './math-api';
 import { GameConfig, QUESTIONS_PER_GAME, Question, Score } from './models';
 
-export type GameStatus = 'idle' | 'loading' | 'playing' | 'finished';
+export type GameStatus = 'idle' | 'loading' | 'countdown' | 'playing' | 'finished';
 export type AnswerResult = 'correct' | 'wrong' | 'finished';
 
 export interface GameResult {
@@ -12,6 +12,8 @@ export interface GameResult {
 }
 
 const TICK_MS = 50;
+export const COUNTDOWN_FROM = 3;
+const COUNTDOWN_STEP_MS = 1000;
 
 /** Holds the state of the current game. Wrong answers keep the same question. */
 @Injectable({ providedIn: 'root' })
@@ -24,6 +26,7 @@ export class GameSession {
   private readonly index = signal(0);
   private readonly _errors = signal(0);
   private readonly _elapsedMs = signal(0);
+  private readonly _countdown = signal(0);
   private readonly _result = signal<GameResult | null>(null);
   private readonly _savedScore = signal<Score | null>(null);
   private readonly _saveError = signal(false);
@@ -32,6 +35,8 @@ export class GameSession {
   readonly config = this._config.asReadonly();
   readonly errors = this._errors.asReadonly();
   readonly elapsedMs = this._elapsedMs.asReadonly();
+  /** Seconds left before the game starts (3, 2, 1) while status is 'countdown'. */
+  readonly countdown = this._countdown.asReadonly();
   readonly result = this._result.asReadonly();
   readonly savedScore = this._savedScore.asReadonly();
   readonly saveError = this._saveError.asReadonly();
@@ -41,11 +46,13 @@ export class GameSession {
 
   private startedAt = 0;
   private timer: ReturnType<typeof setInterval> | undefined;
+  private countdownTimer: ReturnType<typeof setInterval> | undefined;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.stopTimer());
   }
 
+  /** Loads the questions and starts the countdown; the clock starts when it reaches zero. */
   async start(config: GameConfig): Promise<void> {
     this.stopTimer();
     this._status.set('loading');
@@ -65,12 +72,15 @@ export class GameSession {
     this.index.set(0);
     this._errors.set(0);
     this._elapsedMs.set(0);
-    this.startedAt = performance.now();
-    this.timer = setInterval(
-      () => this._elapsedMs.set(performance.now() - this.startedAt),
-      TICK_MS,
-    );
-    this._status.set('playing');
+    this._countdown.set(COUNTDOWN_FROM);
+    this._status.set('countdown');
+    this.countdownTimer = setInterval(() => {
+      this._countdown.update((n) => n - 1);
+      if (this._countdown() === 0) {
+        this.stopTimer();
+        this.startClock();
+      }
+    }, COUNTDOWN_STEP_MS);
   }
 
   answer(value: number): AnswerResult {
@@ -111,6 +121,15 @@ export class GameSession {
     }
   }
 
+  private startClock(): void {
+    this.startedAt = performance.now();
+    this.timer = setInterval(
+      () => this._elapsedMs.set(performance.now() - this.startedAt),
+      TICK_MS,
+    );
+    this._status.set('playing');
+  }
+
   private finish(): void {
     const timeMs = Math.round(performance.now() - this.startedAt);
     this.stopTimer();
@@ -122,6 +141,8 @@ export class GameSession {
 
   private stopTimer(): void {
     clearInterval(this.timer);
+    clearInterval(this.countdownTimer);
     this.timer = undefined;
+    this.countdownTimer = undefined;
   }
 }
