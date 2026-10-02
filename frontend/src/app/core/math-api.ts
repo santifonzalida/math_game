@@ -1,7 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, InjectionToken, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { Level, NewScore, Operation, Question, Score, ScoreStats } from './models';
+import {
+  AnswerResponse,
+  CreatedGame,
+  GameConfig,
+  Level,
+  Operation,
+  Score,
+  ScoreStats,
+} from './models';
 
 declare global {
   interface Window {
@@ -23,14 +31,14 @@ export class MathApi {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_URL);
 
-  getQuestions(operation: Operation, level: Level): Promise<Question[]> {
-    return firstValueFrom(
-      this.http.get<Question[]>(`${this.baseUrl}/questions`, { params: { operation, level } }),
-    );
+  createGame(config: GameConfig): Promise<CreatedGame> {
+    return firstValueFrom(this.http.post<CreatedGame>(`${this.baseUrl}/games`, config));
   }
 
-  saveScore(score: NewScore): Promise<Score> {
-    return firstValueFrom(this.http.post<Score>(`${this.baseUrl}/scores`, score));
+  sendAnswer(gameId: string, index: number, value: number): Promise<AnswerResponse> {
+    return firstValueFrom(
+      this.http.post<AnswerResponse>(`${this.baseUrl}/games/${gameId}/answers`, { index, value }),
+    );
   }
 
   getStats(): Promise<ScoreStats> {

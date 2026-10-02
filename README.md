@@ -92,6 +92,6 @@ Para jugar desde el celular en la misma red, levantá el frontend con `npm start
 - **Frontend:** incluye un `Dockerfile` que sirve la app con nginx. La URL del backend se configura con la variable `API_URL` al levantar el contenedor.
 - **Backend:** se configura con las variables de [`backend/.env.example`](backend/.env.example).
 
-### Próximos pasos
+### Juego limpio
 
-Hoy el tiempo de cada partida se mide en el navegador. Más adelante la idea es que el servidor valide las respuestas y el tiempo, para que el ranking no se pueda falsear.
+El ranking no confía en el navegador. El servidor crea cada partida, valida cada respuesta en orden y mide el tiempo oficial con su propio reloj. Las partidas con tiempos humanamente imposibles no entran al ranking, y hay un límite de pedidos por IP.

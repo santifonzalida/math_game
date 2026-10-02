@@ -1,12 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { QuestionsModule } from './questions/questions.module';
+import { GamesModule } from './games/games.module';
 import { ScoresModule } from './scores/scores.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Per IP. Generous for real players (a fast game is ~11 requests), stops floods.
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 300 }]),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -21,8 +25,9 @@ import { ScoresModule } from './scores/scores.module';
         synchronize: config.get('DB_SYNCHRONIZE') === 'true',
       }),
     }),
-    QuestionsModule,
+    GamesModule,
     ScoresModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

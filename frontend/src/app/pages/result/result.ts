@@ -45,7 +45,7 @@ export class Result {
   protected readonly rankingLoaded = computed(() => this.ranking.hasValue());
 
   protected retrySave(): void {
-    void this.session.saveScore();
+    void this.session.retrySave();
   }
 
   protected async playAgain(): Promise<void> {

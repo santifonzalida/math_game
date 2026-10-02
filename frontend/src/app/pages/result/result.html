@@ -35,6 +35,8 @@
           Reintentar
         </button>
       </p>
+    } @else if (session.rejected()) {
+      <p>Este tiempo no es válido para el ranking.</p>
     } @else if (!session.savedScore() || !rankingLoaded()) {
       <p>Guardando resultado…</p>
     } @else if (position(); as pos) {

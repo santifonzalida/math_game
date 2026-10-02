@@ -1,9 +1,13 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Behind Railway's proxy: take the client IP from X-Forwarded-For, so rate limits
+  // apply per player instead of to everyone at once.
+  app.set('trust proxy', 1);
   const logger = new Logger('CORS');
 
   const allowedOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:4200')

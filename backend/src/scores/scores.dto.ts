@@ -1,32 +1,6 @@
 import { Type } from 'class-transformer';
-import {
-  IsEnum,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
 import { Level, Operation } from '../common/game.types';
-
-export class CreateScoreDto {
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(30)
-  name: string;
-
-  @IsEnum(Operation)
-  operation: Operation;
-
-  @IsEnum(Level)
-  level: Level;
-
-  @IsInt()
-  @Min(1)
-  timeMs: number;
-}
 
 export class RankingQueryDto {
   @IsEnum(Operation)

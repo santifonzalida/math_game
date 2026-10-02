@@ -1,25 +1,53 @@
-// Mirrors backend/src/common/game.types.ts and the /questions and /scores payloads.
+// Mirrors backend/src/common/game.types.ts and the /games and /scores payloads.
 export type Operation = 'addition' | 'subtraction' | 'multiplication' | 'division';
 export type Level = 'low' | 'medium' | 'high';
 
 export const QUESTIONS_PER_GAME = 10;
 
+/** A question as the server sends it: without the answer (see answerOf). */
 export interface Question {
   a: number;
   b: number;
   operation: Operation;
-  answer: number;
 }
 
-export interface NewScore {
+/** The expected answer, so a correct one can advance instantly without a round trip. */
+export function answerOf({ a, b, operation }: Question): number {
+  switch (operation) {
+    case 'addition':
+      return a + b;
+    case 'subtraction':
+      return a - b;
+    case 'multiplication':
+      return a * b;
+    case 'division':
+      return a / b;
+  }
+}
+
+/** POST /games */
+export interface CreatedGame {
+  id: string;
+  countdownMs: number;
+  questions: Question[];
+}
+
+/** POST /games/:id/answers */
+export interface AnswerResponse {
+  accepted: boolean;
+  finished: boolean;
+  /** Once finished: official time, measured by the server. */
+  timeMs?: number;
+  /** Once finished: the ranking entry, or null if the server rejected the time. */
+  score?: Score | null;
+}
+
+export interface Score {
+  id: number;
   name: string;
   operation: Operation;
   level: Level;
   timeMs: number;
-}
-
-export interface Score extends NewScore {
-  id: number;
   createdAt: string;
 }
 

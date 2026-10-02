@@ -11,7 +11,7 @@ import { Router, RouterLink } from '@angular/router';
 import { formatTime } from '../../core/format-time';
 import { GameSession } from '../../core/game-session';
 import { releaseKeyboardProxy } from '../../core/keyboard-proxy';
-import { QUESTIONS_PER_GAME, operationOf } from '../../core/models';
+import { QUESTIONS_PER_GAME, answerOf, operationOf } from '../../core/models';
 
 const FEEDBACK_MS = 350;
 
@@ -94,7 +94,8 @@ export class Play {
   /** A correct answer is accepted as soon as it is typed; wrong ones still need Enter. */
   private submitIfCorrect(): void {
     const value = this.draft();
-    if (isNumber(value) && Number(value) === this.question()?.answer) {
+    const question = this.question();
+    if (question && isNumber(value) && Number(value) === answerOf(question)) {
       this.check();
     }
   }
