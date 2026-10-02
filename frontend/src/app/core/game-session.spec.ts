@@ -77,9 +77,12 @@ describe('GameSession', () => {
     expect(results.slice(0, -1).every((r) => r === 'correct')).toBe(true);
     expect(session.status()).toBe('finished');
     expect(session.result()).toMatchObject({ config, errors: 1 });
-    expect(api.saveScore).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Ana', operation: 'addition', level: 'low', errors: 1 }),
-    );
+    expect(api.saveScore).toHaveBeenCalledWith({
+      name: 'Ana',
+      operation: 'addition',
+      level: 'low',
+      timeMs: expect.any(Number),
+    });
     await vi.waitFor(() => expect(session.savedScore()?.id).toBe(1));
   });
 

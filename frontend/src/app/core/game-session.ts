@@ -8,6 +8,7 @@ export type AnswerResult = 'correct' | 'wrong' | 'finished';
 export interface GameResult {
   config: GameConfig;
   timeMs: number;
+  /** Shown to the player only; the ranking is decided by time alone. */
   errors: number;
 }
 
@@ -113,7 +114,6 @@ export class GameSession {
       const score = await this.api.saveScore({
         ...result.config,
         timeMs: result.timeMs,
-        errors: result.errors,
       });
       this._savedScore.set(score);
     } catch {

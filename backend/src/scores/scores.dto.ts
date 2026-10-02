@@ -26,10 +26,6 @@ export class CreateScoreDto {
   @IsInt()
   @Min(1)
   timeMs: number;
-
-  @IsInt()
-  @Min(0)
-  errors: number;
 }
 
 export class RankingQueryDto {

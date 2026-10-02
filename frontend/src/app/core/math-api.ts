@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, InjectionToken, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { Level, NewScore, Operation, Question, Score } from './models';
+import { Level, NewScore, Operation, Question, Score, ScoreStats } from './models';
 
 declare global {
   interface Window {
@@ -31,6 +31,10 @@ export class MathApi {
 
   saveScore(score: NewScore): Promise<Score> {
     return firstValueFrom(this.http.post<Score>(`${this.baseUrl}/scores`, score));
+  }
+
+  getStats(): Promise<ScoreStats> {
+    return firstValueFrom(this.http.get<ScoreStats>(`${this.baseUrl}/scores/stats`));
   }
 
   getRanking(operation: Operation, level: Level, limit = 10): Promise<Score[]> {

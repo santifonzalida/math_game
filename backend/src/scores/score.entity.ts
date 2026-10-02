@@ -8,7 +8,7 @@ import {
 import { Level, Operation } from '../common/game.types';
 
 @Entity('scores')
-@Index(['operation', 'level', 'timeMs', 'errors', 'createdAt'])
+@Index(['operation', 'level', 'timeMs', 'createdAt'])
 export class Score {
   @PrimaryGeneratedColumn()
   id: number;
@@ -24,9 +24,6 @@ export class Score {
 
   @Column({ type: 'int' })
   timeMs: number;
-
-  @Column({ type: 'int' })
-  errors: number;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;

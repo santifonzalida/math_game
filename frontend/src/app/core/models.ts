@@ -16,12 +16,17 @@ export interface NewScore {
   operation: Operation;
   level: Level;
   timeMs: number;
-  errors: number;
 }
 
 export interface Score extends NewScore {
   id: number;
   createdAt: string;
+}
+
+/** GET /scores/stats: finished games, in total and per operation and level. */
+export interface ScoreStats {
+  total: number;
+  counts: Record<Operation, Record<Level, number>>;
 }
 
 export interface GameConfig {

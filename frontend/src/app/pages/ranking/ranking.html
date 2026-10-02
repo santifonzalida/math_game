@@ -1,5 +1,15 @@
 <div class="space-y-6">
-  <h1 class="text-3xl font-bold tracking-tight">Ranking</h1>
+  <div class="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+    <h1 class="text-3xl font-bold tracking-tight">Ranking</h1>
+    @if (stats.hasValue()) {
+      <p class="text-sm text-slate-500 dark:text-slate-400">
+        <strong class="text-lg font-bold tabular-nums text-slate-900 dark:text-slate-100">
+          {{ formatCount(stats.value().total) }}
+        </strong>
+        {{ stats.value().total === 1 ? 'partida completada' : 'partidas completadas' }}
+      </p>
+    }
+  </div>
 
   <nav class="grid grid-cols-4 gap-2" aria-label="Operación">
     @for (op of operations; track op.value) {
@@ -63,7 +73,6 @@
               <th class="w-12 px-4 py-3">#</th>
               <th class="px-4 py-3">Nombre</th>
               <th class="px-4 py-3 text-right">Tiempo</th>
-              <th class="px-4 py-3 text-right">Errores</th>
             </tr>
           </thead>
           <tbody class="tabular-nums">
@@ -81,7 +90,6 @@
                 <td class="px-4 py-3">{{ i === 0 ? '🏆' : i + 1 }}</td>
                 <td class="max-w-0 truncate px-4 py-3">{{ score.name }}</td>
                 <td class="px-4 py-3 text-right">{{ formatTime(score.timeMs) }}</td>
-                <td class="px-4 py-3 text-right">{{ score.errors }}</td>
               </tr>
             }
           </tbody>
@@ -91,6 +99,73 @@
       <p class="p-6 text-center text-slate-500 dark:text-slate-400">Cargando…</p>
     }
   </div>
+
+  @if (stats.hasValue()) {
+    <!-- Collapsed by default; native <details> handles click, keyboard and screen readers. -->
+    <details
+      class="group overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+    >
+      <summary
+        class="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800/50 [&::-webkit-details-marker]:hidden"
+      >
+        <span class="font-semibold">Partidas completadas por categoría</span>
+        <svg
+          class="size-5 shrink-0 text-slate-400 transition-transform group-open:rotate-180"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      </summary>
+      <table class="w-full border-t border-slate-200 text-left text-sm dark:border-slate-800">
+        <thead
+          class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400"
+        >
+          <tr>
+            <th class="px-4 py-3">Operación</th>
+            @for (lvl of levels; track lvl.value) {
+              <th class="px-2 py-3 text-center">{{ lvl.label }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody class="tabular-nums">
+          @for (op of operations; track op.value) {
+            <tr class="border-b border-slate-100 last:border-0 dark:border-slate-800/60">
+              <th scope="row" class="px-4 py-2 font-medium">
+                <span class="inline-block w-5 text-center">{{ op.symbol }}</span>
+                <span class="sm:hidden">{{ op.shortLabel }}</span>
+                <span class="hidden sm:inline">{{ op.label }}</span>
+              </th>
+              @for (lvl of levels; track lvl.value) {
+                <td class="px-1 py-1 text-center">
+                  <a
+                    class="block rounded-lg px-2 py-1.5 transition"
+                    [class]="
+                      operation() === op.value && level() === lvl.value
+                        ? 'bg-indigo-50 font-semibold text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300'
+                        : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                    "
+                    routerLink="/ranking"
+                    [queryParams]="{ operation: op.value, level: lvl.value }"
+                    [attr.aria-label]="
+                      op.label + ' ' + lvl.label + ': ' + stats.value().counts[op.value][lvl.value]
+                    "
+                  >
+                    {{ formatCount(stats.value().counts[op.value][lvl.value]) }}
+                  </a>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </details>
+  }
 
   <a class="inline-block text-indigo-600 hover:underline dark:text-indigo-400" routerLink="/"
     >← Volver a jugar</a

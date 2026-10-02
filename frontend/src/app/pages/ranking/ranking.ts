@@ -20,6 +20,8 @@ export class Ranking {
   protected readonly operations = OPERATIONS;
   protected readonly levels = LEVELS;
   protected readonly formatTime = formatTime;
+  private readonly numberFormat = new Intl.NumberFormat('es-AR');
+  protected readonly formatCount = (n: number) => this.numberFormat.format(n);
 
   protected readonly operation = computed(() => {
     const value = this.operationParam();
@@ -34,4 +36,6 @@ export class Ranking {
     params: () => ({ operation: this.operation(), level: this.level() }),
     loader: ({ params }) => this.api.getRanking(params.operation, params.level),
   });
+
+  protected readonly stats = resource({ loader: () => this.api.getStats() });
 }
