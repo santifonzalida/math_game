@@ -1,5 +1,6 @@
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { MathApi } from './math-api';
+import { loadPracticeBest, savePracticeBest } from './practice-best';
 import { GameConfig, QUESTIONS_PER_GAME, Question, Score, answerOf } from './models';
 
 export type GameStatus = 'idle' | 'loading' | 'countdown' | 'playing' | 'finished';
@@ -11,10 +12,21 @@ export interface GameResult {
   timeMs: number;
   /** Shown to the player only; the ranking is decided by time alone. */
   errors: number;
+  /** Practice only: how many answers the player chose to see. */
+  revealed: number;
+}
+
+/** Practice only: the player's best time for this operation and level, kept in the browser. */
+export interface PracticeBest {
+  /** Best time before this game, or null if it is the first one. */
+  previousMs: number | null;
+  isNew: boolean;
 }
 
 const TICK_MS = 50;
 const COUNTDOWN_STEP_MS = 1000;
+/** Same countdown the server uses for ranked games. */
+const PRACTICE_COUNTDOWN_MS = 3000;
 
 /** Correct answers of one game, sent to the server in order. */
 interface AnswerSync {
@@ -26,8 +38,9 @@ interface AnswerSync {
 
 /**
  * Holds the state of the current game. Wrong answers keep the same question.
- * The server owns the official clock: every correct answer is sent to it in the
- * background, and the last one returns the official time and the ranking entry.
+ * Ranked: the server owns the official clock; every correct answer is sent to it in
+ * the background, and the last one returns the official time and the ranking entry.
+ * Practice: nothing is sent; the browser's time is the result.
  */
 @Injectable({ providedIn: 'root' })
 export class GameSession {
@@ -44,6 +57,11 @@ export class GameSession {
   private readonly _savedScore = signal<Score | null>(null);
   private readonly _rejected = signal(false);
   private readonly _saveError = signal(false);
+  private readonly _practiceBest = signal<PracticeBest | null>(null);
+  /** Index of the last question answered wrong, and of the question whose answer is shown. */
+  private readonly wrongIndex = signal<number | null>(null);
+  private readonly revealedIndex = signal<number | null>(null);
+  private readonly revealCount = signal(0);
 
   readonly status = this._status.asReadonly();
   readonly config = this._config.asReadonly();
@@ -57,9 +75,24 @@ export class GameSession {
   /** The server finished the game but did not rank it (impossibly fast). */
   readonly rejected = this._rejected.asReadonly();
   readonly saveError = this._saveError.asReadonly();
+  readonly practiceBest = this._practiceBest.asReadonly();
+  readonly isPractice = computed(() => this._config()?.mode === 'practice');
 
   readonly correctCount = this.index.asReadonly();
   readonly currentQuestion = computed(() => this.questions()[this.index()] ?? null);
+  /** Practice: after a wrong answer, the player may ask to see the right one. */
+  readonly canReveal = computed(
+    () =>
+      this.isPractice() &&
+      this._status() === 'playing' &&
+      this.wrongIndex() === this.index() &&
+      this.revealedIndex() !== this.index(),
+  );
+  /** The current question's answer, once the player asked to see it. */
+  readonly revealedAnswer = computed(() => {
+    const question = this.currentQuestion();
+    return question && this.revealedIndex() === this.index() ? answerOf(question) : null;
+  });
 
   private startedAt = 0;
   private timer: ReturnType<typeof setInterval> | undefined;
@@ -70,7 +103,7 @@ export class GameSession {
     inject(DestroyRef).onDestroy(() => this.stopTimer());
   }
 
-  /** Creates the game on the server and starts the countdown; the clock starts at zero. */
+  /** Gets the questions (ranked: creates the game on the server) and starts the countdown. */
   async start(config: GameConfig): Promise<void> {
     this.stopTimer();
     this.sync = null;
@@ -80,13 +113,22 @@ export class GameSession {
     this._savedScore.set(null);
     this._rejected.set(false);
     this._saveError.set(false);
+    this._practiceBest.set(null);
+    this.wrongIndex.set(null);
+    this.revealedIndex.set(null);
+    this.revealCount.set(0);
 
     let countdownMs: number;
     try {
-      const game = await this.api.createGame(config);
-      this.questions.set(game.questions);
-      this.sync = { gameId: game.id, values: [], confirmed: 0, running: false };
-      countdownMs = game.countdownMs;
+      if (config.mode === 'practice') {
+        this.questions.set(await this.api.getPracticeQuestions(config.operation, config.level));
+        countdownMs = PRACTICE_COUNTDOWN_MS;
+      } else {
+        const game = await this.api.createGame(config);
+        this.questions.set(game.questions);
+        this.sync = { gameId: game.id, values: [], confirmed: 0, running: false };
+        countdownMs = game.countdownMs;
+      }
     } catch (err) {
       this._status.set('idle');
       throw err;
@@ -108,16 +150,19 @@ export class GameSession {
 
   answer(value: number): AnswerResult {
     const question = this.currentQuestion();
-    if (this._status() !== 'playing' || !question || !this.sync) {
+    if (this._status() !== 'playing' || !question) {
       return 'wrong';
     }
     if (value !== answerOf(question)) {
       this._errors.update((e) => e + 1);
+      this.wrongIndex.set(this.index());
       return 'wrong';
     }
 
-    this.sync.values.push(value);
-    void this.flush();
+    if (this.sync) {
+      this.sync.values.push(value);
+      void this.flush();
+    }
     this.index.update((i) => i + 1);
     if (this.index() < QUESTIONS_PER_GAME) {
       return 'correct';
@@ -125,6 +170,15 @@ export class GameSession {
 
     this.finish();
     return 'finished';
+  }
+
+  /** Practice: shows the current question's answer (only after answering it wrong). */
+  reveal(): void {
+    if (!this.canReveal()) {
+      return;
+    }
+    this.revealedIndex.set(this.index());
+    this.revealCount.update((n) => n + 1);
   }
 
   /** Sends the answers the server has not confirmed yet. Safe to call again after a failure. */
@@ -184,9 +238,22 @@ export class GameSession {
     const timeMs = Math.round(performance.now() - this.startedAt);
     this.stopTimer();
     this._elapsedMs.set(timeMs);
-    // Provisional: the last answer is still on its way; its response brings the official time.
-    this._result.set({ config: this._config()!, timeMs, errors: this._errors() });
+    const config = this._config()!;
+    // Ranked: provisional, the last answer's response brings the official time.
+    this._result.set({ config, timeMs, errors: this._errors(), revealed: this.revealCount() });
+    if (config.mode === 'practice') {
+      this.recordPracticeBest(config, timeMs);
+    }
     this._status.set('finished');
+  }
+
+  private recordPracticeBest({ operation, level }: GameConfig, timeMs: number): void {
+    const previousMs = loadPracticeBest(operation, level);
+    const isNew = previousMs === null || timeMs < previousMs;
+    if (isNew) {
+      savePracticeBest(operation, level, timeMs);
+    }
+    this._practiceBest.set({ previousMs, isNew });
   }
 
   private stopTimer(): void {

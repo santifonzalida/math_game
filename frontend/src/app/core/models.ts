@@ -57,10 +57,19 @@ export interface ScoreStats {
   counts: Record<Operation, Record<Level, number>>;
 }
 
+/** ranked: timed by the server and saved to the ranking. practice: nothing is saved. */
+export type GameMode = 'ranked' | 'practice';
+
 export interface GameConfig {
+  mode: GameMode;
+  /** Required to compete; optional in practice. */
   name: string;
   operation: Operation;
   level: Level;
+}
+
+export function isGameMode(value: unknown): value is GameMode {
+  return value === 'ranked' || value === 'practice';
 }
 
 export const OPERATIONS: { value: Operation; label: string; shortLabel: string; symbol: string }[] =

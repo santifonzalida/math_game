@@ -6,8 +6,35 @@
     </p>
   </div>
 
+  <fieldset>
+    <legend class="sr-only">Modo de juego</legend>
+    <div class="flex gap-1 rounded-xl bg-slate-200 p-1 dark:bg-slate-800">
+      @for (m of modes; track m.value) {
+        <button
+          type="button"
+          class="flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition"
+          [class]="
+            mode() === m.value
+              ? 'bg-white text-indigo-700 shadow-sm dark:bg-slate-950 dark:text-indigo-300'
+              : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
+          "
+          [attr.aria-pressed]="mode() === m.value"
+          (click)="mode.set(m.value)"
+        >
+          {{ m.label }}
+        </button>
+      }
+    </div>
+    <p class="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">{{ modeHint() }}</p>
+  </fieldset>
+
   <label class="block">
-    <span class="text-sm font-medium text-slate-600 dark:text-slate-300">Tu nombre</span>
+    <span class="text-sm font-medium text-slate-600 dark:text-slate-300">
+      Tu nombre
+      @if (!nameRequired()) {
+        <span class="font-normal text-slate-400">(opcional)</span>
+      }
+    </span>
     <input
       class="mt-1 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-lg outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 dark:border-slate-700 dark:bg-slate-900"
       maxlength="30"
@@ -79,7 +106,7 @@
       class="flex-1 rounded-xl bg-indigo-600 px-6 py-4 text-lg font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
       [disabled]="!canStart()"
     >
-      {{ loading() ? 'Cargando…' : 'Jugar' }}
+      {{ loading() ? 'Cargando…' : mode() === 'practice' ? 'Practicar' : 'Jugar' }}
     </button>
     <a
       class="rounded-xl border border-slate-300 px-6 py-4 text-center font-medium hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"

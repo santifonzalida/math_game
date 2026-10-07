@@ -82,6 +82,11 @@ export class Play {
     this.submitIfCorrect();
   }
 
+  protected reveal(): void {
+    this.session.reveal();
+    this.focusInput();
+  }
+
   protected submit(event: Event): void {
     event.preventDefault();
     if (!isNumber(this.draft())) {
