@@ -4,7 +4,8 @@ import { GameSession } from './game-session';
 import { MathApi } from './math-api';
 import { AnswerResponse, GameConfig, Question, Score } from './models';
 
-const config: GameConfig = { name: 'Ana', operation: 'addition', level: 'low' };
+const config: GameConfig = { mode: 'ranked', name: 'Ana', operation: 'addition', level: 'low' };
+const practice: GameConfig = { ...config, mode: 'practice', name: '' };
 const questions: Question[] = Array.from({ length: 10 }, (_, i) => ({
   a: i,
   b: 1,
@@ -22,11 +23,16 @@ const officialScore: Score = {
 
 describe('GameSession', () => {
   let session: GameSession;
-  let api: { createGame: ReturnType<typeof vi.fn>; sendAnswer: ReturnType<typeof vi.fn> };
+  let api: {
+    createGame: ReturnType<typeof vi.fn>;
+    sendAnswer: ReturnType<typeof vi.fn>;
+    getPracticeQuestions: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     api = {
       createGame: vi.fn().mockResolvedValue({ id: 'g1', countdownMs: 3000, questions }),
+      getPracticeQuestions: vi.fn().mockResolvedValue(questions),
       sendAnswer: vi
         .fn()
         .mockImplementation(async (_id: string, index: number): Promise<AnswerResponse> =>
@@ -35,6 +41,7 @@ describe('GameSession', () => {
             : { accepted: true, finished: false },
         ),
     };
+    localStorage.clear();
     TestBed.configureTestingModule({ providers: [{ provide: MathApi, useValue: api }] });
     session = TestBed.inject(GameSession);
     vi.useFakeTimers();
@@ -42,9 +49,16 @@ describe('GameSession', () => {
 
   afterEach(() => vi.useRealTimers());
 
-  async function startAndSkipCountdown() {
-    await session.start(config);
+  async function startAndSkipCountdown(gameConfig = config) {
+    await session.start(gameConfig);
     vi.advanceTimersByTime(3000);
+  }
+
+  /** Plays a whole practice game taking `ms` of (fake) time. */
+  async function playPractice(ms: number) {
+    await startAndSkipCountdown(practice);
+    vi.advanceTimersByTime(ms);
+    answers.forEach((a) => session.answer(a));
   }
 
   it('creates the game on the server and plays its questions', async () => {
@@ -120,6 +134,53 @@ describe('GameSession', () => {
 
     expect(session.saveError()).toBe(false);
     expect(session.savedScore()).toEqual(officialScore);
+  });
+
+  describe('practice', () => {
+    it('gets questions without creating a game and never sends answers', async () => {
+      await playPractice(5000);
+
+      expect(api.getPracticeQuestions).toHaveBeenCalledWith('addition', 'low');
+      expect(api.createGame).not.toHaveBeenCalled();
+      expect(api.sendAnswer).not.toHaveBeenCalled();
+      expect(session.status()).toBe('finished');
+      expect(session.result()?.timeMs).toBeGreaterThanOrEqual(5000);
+    });
+
+    it('remembers the best time per operation and level', async () => {
+      await playPractice(9000);
+      expect(session.practiceBest()).toEqual({ previousMs: null, isNew: true });
+      const first = session.result()!.timeMs;
+
+      await playPractice(12000);
+      expect(session.practiceBest()).toEqual({ previousMs: first, isNew: false });
+
+      await playPractice(6000);
+      expect(session.practiceBest()).toEqual({ previousMs: first, isNew: true });
+    });
+
+    it('lets the player see the answer only after a wrong one, and counts it', async () => {
+      await startAndSkipCountdown(practice);
+      expect(session.canReveal()).toBe(false);
+
+      session.answer(-1);
+      expect(session.canReveal()).toBe(true);
+      session.reveal();
+      expect(session.revealedAnswer()).toBe(answers[0]);
+      expect(session.canReveal()).toBe(false);
+
+      session.answer(answers[0]);
+      expect(session.revealedAnswer()).toBeNull();
+      answers.slice(1).forEach((a) => session.answer(a));
+      expect(session.result()?.revealed).toBe(1);
+    });
+  });
+
+  it('never offers to reveal answers in a ranked game', async () => {
+    await startAndSkipCountdown();
+    session.answer(-1);
+
+    expect(session.canReveal()).toBe(false);
   });
 
   it('goes back to idle when the game cannot be created', async () => {
