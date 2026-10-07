@@ -26,6 +26,15 @@
 
 La meta es simple: **bajar tu récord**. Cada combinación de operación y nivel tiene su propio ranking.
 
+## Dos modos de juego
+
+- **Competir.** Tu tiempo entra al ranking. Necesitás poner tu nombre.
+- **Práctica libre.** Para entrenar sin presión: el tiempo no se guarda en el ranking y el nombre es opcional.
+  - **Ver respuesta:** si te equivocás en una pregunta, podés ver la respuesta correcta. Igual tenés que escribirla para avanzar, así la aprendés.
+  - **Comparación con el récord:** al terminar, ves cuánto te faltó para el récord del nivel, o si lo superaste.
+  - **Tu mejor tiempo:** el juego recuerda tu mejor práctica en cada operación y nivel. Se guarda solo en tu navegador.
+  - **Del entrenamiento a la competencia:** con **Competir en este nivel** pasás directo al modo competitivo con la misma operación y nivel.
+
 ## Operaciones y niveles
 
 Hay 4 operaciones con 3 niveles cada una, en total 12 desafíos distintos.

@@ -7,6 +7,7 @@ import {
   GameConfig,
   Level,
   Operation,
+  Question,
   Score,
   ScoreStats,
 } from './models';
@@ -31,8 +32,19 @@ export class MathApi {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_URL);
 
-  createGame(config: GameConfig): Promise<CreatedGame> {
-    return firstValueFrom(this.http.post<CreatedGame>(`${this.baseUrl}/games`, config));
+  createGame({ name, operation, level }: GameConfig): Promise<CreatedGame> {
+    return firstValueFrom(
+      this.http.post<CreatedGame>(`${this.baseUrl}/games`, { name, operation, level }),
+    );
+  }
+
+  /** Free practice: questions only, nothing is stored on the server. */
+  getPracticeQuestions(operation: Operation, level: Level): Promise<Question[]> {
+    return firstValueFrom(
+      this.http.get<Question[]>(`${this.baseUrl}/practice/questions`, {
+        params: { operation, level },
+      }),
+    );
   }
 
   sendAnswer(gameId: string, index: number, value: number): Promise<AnswerResponse> {

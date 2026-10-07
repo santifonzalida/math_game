@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GamesModule } from './games/games.module';
+import { PracticeModule } from './practice/practice.module';
 import { ScoresModule } from './scores/scores.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { ScoresModule } from './scores/scores.module';
       }),
     }),
     GamesModule,
+    PracticeModule,
     ScoresModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
