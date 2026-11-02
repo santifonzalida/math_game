@@ -2,8 +2,8 @@
   <div class="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
     <h1 class="text-3xl font-bold tracking-tight">Ranking</h1>
     @if (stats.hasValue()) {
-      <p class="text-sm text-slate-500 dark:text-slate-400">
-        <strong class="text-lg font-bold tabular-nums text-slate-900 dark:text-slate-100">
+      <p class="text-sm text-slate-500 dark:text-slate-500">
+        <strong class="text-lg font-bold tabular-nums text-slate-900 dark:text-slate-600">
           {{ formatCount(stats.value().total) }}
         </strong>
         {{ stats.value().total === 1 ? 'partida completada' : 'partidas completadas' }}
@@ -23,10 +23,11 @@
         routerLink="/ranking"
         [queryParams]="{ operation: op.value, level: level() }"
         [attr.aria-current]="operation() === op.value ? 'page' : null"
+        [attr.aria-label]="op.label"
       >
-        <span class="block text-2xl font-bold leading-none">{{ op.symbol }}</span>
-        <span class="mt-1 block text-xs sm:hidden">{{ op.shortLabel }}</span>
-        <span class="mt-1 hidden text-xs sm:block">{{ op.label }}</span>
+        <span class="block text-2xl leading-none">{{ op.symbol }}</span>
+        <!-- On phones only the symbol fits; from tablet up the short name (the full one never fits). -->
+        <span class="mt-1 hidden text-[10px] sm:block">{{ op.shortLabel }}</span>
       </a>
     }
   </nav>
@@ -75,16 +76,16 @@
               <th class="px-4 py-3 text-right">Tiempo</th>
             </tr>
           </thead>
-          <tbody class="tabular-nums">
+          <tbody class="text-[11px] text-slate-600">
             @for (score of ranking.value(); track score.id; let i = $index) {
+              <!-- The player's own result (coming from a game) gets an outline, not another fill. -->
               <tr
-                class="border-b border-slate-100 last:border-0 dark:border-slate-800/60"
+                class="border-b-2 border-white last:border-0"
                 [class]="
-                  score.id === highlight()
-                    ? 'bg-indigo-50 font-semibold dark:bg-indigo-500/15'
-                    : i === 0
-                      ? 'font-semibold'
-                      : ''
+                  (i === 0 ? 'bg-rank-first text-nes-dark' : 'bg-rank-rest') +
+                  (score.id === highlight()
+                    ? ' outline-3 outline-solid -outline-offset-3 outline-nes-primary'
+                    : '')
                 "
               >
                 <td class="px-4 py-3">{{ i === 0 ? '🏆' : i + 1 }}</td>
@@ -108,7 +109,7 @@
       <summary
         class="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800/50 [&::-webkit-details-marker]:hidden"
       >
-        <span class="font-semibold">Partidas completadas por categoría</span>
+        <span class="font-semibold text-slate-300">Partidas completadas por categoría</span>
         <svg
           class="size-5 shrink-0 text-slate-400 transition-transform group-open:rotate-180"
           viewBox="0 0 20 20"
@@ -124,7 +125,7 @@
       </summary>
       <table class="w-full border-t border-slate-200 text-left text-sm dark:border-slate-800">
         <thead
-          class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400"
+          class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-300 dark:border-slate-800"
         >
           <tr>
             <th class="px-4 py-3">Operación</th>
@@ -136,10 +137,10 @@
         <tbody class="tabular-nums">
           @for (op of operations; track op.value) {
             <tr class="border-b border-slate-100 last:border-0 dark:border-slate-800/60">
-              <th scope="row" class="px-4 py-2 font-medium">
+              <th scope="row" class="px-4 py-2 text-slate-300 text-center">
                 <span class="inline-block w-5 text-center">{{ op.symbol }}</span>
-                <span class="sm:hidden">{{ op.shortLabel }}</span>
-                <span class="hidden sm:inline">{{ op.label }}</span>
+                <!-- Phones: symbol only (the name is still read by screen readers). -->
+                <span class="sr-only sm:not-sr-only">{{ op.label }}</span>
               </th>
               @for (lvl of levels; track lvl.value) {
                 <td class="px-1 py-1 text-center">
@@ -167,7 +168,5 @@
     </details>
   }
 
-  <a class="inline-block text-indigo-600 hover:underline dark:text-indigo-400" routerLink="/"
-    >← Volver a jugar</a
-  >
+  <a class="inline-block text-slate-500 hover:underline" routerLink="/">← Volver a jugar</a>
 </div>
