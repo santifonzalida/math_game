@@ -1,28 +1,8 @@
 @import 'tailwindcss';
-/* NES.css goes in the components layer so Tailwind utilities (layout, spacing) still win over it. */
-@import 'nes.css/css/nes.min.css' layer(components);
 
 @theme {
-  /*
-   * Pixel font everywhere. Press Start 2P only covers Latin-1: UI text must avoid
-   * characters like '–', '…' or '←', which would fall back to another font.
-   */
-  --font-pixel: 'Press Start 2P', ui-monospace, monospace;
-  --font-sans: var(--font-pixel);
-
-  /* NES.css palette. */
-  --color-nes-primary: #209cee;
-  --color-nes-success: #92cc41;
-  --color-nes-warning: #f7d51d;
-  --color-nes-error: #e76e55;
-  --color-nes-dark: #212529;
-
-  /* Ranking rows: first place, and a slightly darker tone of it for the rest. */
-  --color-rank-first: #cadef3;
-  --color-rank-rest: #b1ceed;
-
-  --animate-shake: shake 0.35s steps(4) both;
-  --animate-pop: pop 0.6s steps(4) both;
+  --animate-shake: shake 0.35s ease-in-out;
+  --animate-pop: pop 0.6s ease-out;
 
   @keyframes pop {
     0% {
@@ -55,36 +35,14 @@
   }
 }
 
-/* Unlayered on purpose, to beat NES.css (components layer). */
-html,
-body {
-  background: var(--color-slate-50);
-}
-
-body {
-  min-height: 100dvh;
-  color: var(--color-nes-dark);
-  /* The pixel font is wide: a smaller base size with airy lines reads better. */
-  font-size: 0.75rem;
-  line-height: 1.8;
-  /* The pixel font has a single weight: faux bold smears its pixels, so never synthesize it. */
-  font-synthesis: none;
-}
-
-/* NES.css assumes a white page: container titles cut the border with a white patch. */
-.nes-container.with-title > .title {
-  background-color: var(--color-slate-50);
-}
-
-/* NES.css leaves inputs transparent; keep them white so they stand out on the gray page. */
-.nes-input {
-  background-color: #fff;
-}
-
-/* NES.css removes the focus outline; keep keyboard focus visible. */
-.nes-btn:focus-visible,
-.nes-input:focus-visible,
-.nes-radio:focus-visible + span {
-  outline: 3px dashed var(--color-nes-primary);
-  outline-offset: 3px;
+@layer base {
+  body {
+    @apply min-h-dvh bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+  }
 }

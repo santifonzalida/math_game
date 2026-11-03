@@ -9,15 +9,29 @@
     <h1 class="mt-2 text-3xl font-bold sm:text-4xl">{{ title() }}</h1>
   </div>
 
-  <div
-    class="mx-auto max-w-xs rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
-  >
-    <p class="text-sm text-slate-500 dark:text-slate-300">Tiempo total</p>
-    <p class="mt-2 text-4xl tabular-nums text-slate-500 dark:text-slate-500">{{ time() }}</p>
+  <div class="grid grid-cols-2 gap-4">
+    <div
+      class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
+    >
+      <p class="text-sm text-slate-500 dark:text-slate-400">Tiempo</p>
+      <p class="mt-1 text-4xl font-bold tabular-nums">{{ time() }}</p>
+    </div>
+    <div
+      class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
+    >
+      <p class="text-sm text-slate-500 dark:text-slate-400">Errores</p>
+      <p class="mt-1 text-4xl font-bold tabular-nums">{{ result().errors }}</p>
+      @if (result().revealed > 0) {
+        <p class="mt-1 text-xs text-amber-700 dark:text-amber-300">
+          {{ result().revealed }}
+          {{ result().revealed === 1 ? 'respuesta vista' : 'respuestas vistas' }}
+        </p>
+      }
+    </div>
   </div>
 
   @if (isPractice()) {
-    <div class="space-y-2 text-slate-500" aria-live="polite">
+    <div class="space-y-2 text-slate-600 dark:text-slate-300" aria-live="polite">
       @if (session.practiceBest(); as best) {
         @if (best.previousMs === null) {
           <p>Es tu primera práctica en este nivel: este es tu tiempo a superar.</p>
@@ -62,10 +76,10 @@
         }
       }
 
-      <p class="text-xs">Modo práctica: este tiempo no se guarda en el ranking.</p>
+      <p class="text-xs text-slate-400">Modo práctica: este tiempo no se guarda en el ranking.</p>
     </div>
   } @else {
-    <div class="min-h-6 text-slate-500" aria-live="polite">
+    <div class="min-h-6 text-slate-600 dark:text-slate-300" aria-live="polite">
       @if (session.saveError()) {
         <p class="text-red-600 dark:text-red-400">
           No se pudo guardar tu resultado.
@@ -88,20 +102,19 @@
     </div>
   }
 
-  <!-- Main action in dark; the others look like the time card above. -->
   <div class="flex flex-col gap-3 sm:flex-row">
     <button
       type="button"
-      class="flex-1 rounded-2xl border border-slate-900 bg-slate-900 px-6 py-4 text-lg text-slate-300 transition hover:bg-slate-800 disabled:opacity-50"
+      class="flex-1 rounded-xl bg-indigo-600 px-6 py-4 text-lg font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50"
       [disabled]="restarting()"
       (click)="playAgain()"
     >
-      {{ restarting() ? 'Cargando...' : isPractice() ? 'Practicar de nuevo' : 'Jugar de nuevo' }}
+      {{ restarting() ? 'Cargando…' : isPractice() ? 'Practicar de nuevo' : 'Jugar de nuevo' }}
     </button>
     @if (isPractice()) {
       <button
         type="button"
-        class="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-nes-dark no-underline transition hover:bg-slate-50 disabled:opacity-50"
+        class="rounded-xl border border-slate-300 px-6 py-4 font-medium hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:hover:bg-slate-800"
         [disabled]="restarting()"
         (click)="competeHere()"
       >
@@ -109,7 +122,7 @@
       </button>
     } @else {
       <a
-        class="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-nes-dark no-underline transition hover:bg-slate-50 disabled:opacity-50"
+        class="rounded-xl border border-slate-300 px-6 py-4 font-medium hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
         routerLink="/ranking"
         [queryParams]="{
           operation: result().config.operation,
@@ -121,7 +134,7 @@
       </a>
     }
     <a
-      class="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-nes-dark no-underline transition hover:bg-slate-50 disabled:opacity-50"
+      class="rounded-xl border border-slate-300 px-6 py-4 font-medium hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
       routerLink="/"
     >
       Cambiar juego
