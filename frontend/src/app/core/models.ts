@@ -75,8 +75,7 @@ export function isGameMode(value: unknown): value is GameMode {
 export const OPERATIONS: { value: Operation; label: string; shortLabel: string; symbol: string }[] =
   [
     { value: 'addition', label: 'Suma', shortLabel: 'Suma', symbol: '+' },
-    // ASCII hyphen: the pixel font has no U+2212 minus sign.
-    { value: 'subtraction', label: 'Resta', shortLabel: 'Resta', symbol: '-' },
+    { value: 'subtraction', label: 'Resta', shortLabel: 'Resta', symbol: '−' },
     { value: 'multiplication', label: 'Multiplicación', shortLabel: 'Multipl.', symbol: '×' },
     { value: 'division', label: 'División', shortLabel: 'División', symbol: '÷' },
   ];
@@ -91,7 +90,7 @@ export const LEVELS: { value: Level; label: string }[] = [
 export const LEVEL_HINTS: Record<Operation, Record<Level, string>> = {
   addition: { low: '0 a 9', medium: '0 a 99', high: '0 a 999' },
   subtraction: { low: '0 a 9', medium: '0 a 99', high: '0 a 999' },
-  multiplication: { low: '7 × 8', medium: '47 × 6', high: '47 × 36' },
+  multiplication: { low: 'Tablas 0–9', medium: '47 × 6', high: '47 × 36' },
   division: { low: '56 ÷ 7', medium: '423 ÷ 9', high: '1692 ÷ 36' },
 };
 
